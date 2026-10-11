@@ -5,29 +5,20 @@
 </head>
 <body>
 <main class="space-y-10">
-	<header class="space-y-2">
-		<p class="eyebrow">$ ls ~/projects</p>
-		<h1>Projects</h1>
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ ls ~/projects</p>
+			<h1>Projects</h1>
+		</div>
+		<a th:href="@{/projects/manage}" class="btn-ghost">Manage</a>
 	</header>
 
-	<!-- Duplicate an article for each project (Stage 2 moves these into the database). -->
-	<div class="grid gap-4 sm:grid-cols-2">
-		<article class="card flex flex-col gap-3">
-			<h2 class="text-lg">evangeloswebsite</h2>
-			<p class="text-sm text-muted">This site: a portfolio plus a personal task manager and calendar.</p>
-			<ul class="mt-auto flex flex-wrap gap-2">
-				<li class="tag">Spring Boot</li>
-				<li class="tag">Thymeleaf</li>
-				<li class="tag">Tailwind</li>
-			</ul>
-		</article>
-		<article class="card flex flex-col gap-3">
-			<h2 class="text-lg">Project name</h2>
-			<p class="text-sm text-muted">What it is and what you used.</p>
-			<ul class="mt-auto flex flex-wrap gap-2">
-				<li class="tag">Tech</li>
-			</ul>
-		</article>
+	<p th:if="${projects.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">No projects yet.</p>
+
+	<div th:unless="${projects.empty}" class="grid gap-4 sm:grid-cols-2">
+		<th:block th:each="item : ${projects}">
+			<article th:replace="~{portfolio/project-card :: card(${item})}"></article>
+		</th:block>
 	</div>
 </main>
 </body>

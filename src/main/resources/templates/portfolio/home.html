@@ -18,8 +18,20 @@
 		</div>
 	</section>
 
+	<section th:unless="${featured.empty}" class="space-y-4">
+		<div class="flex items-baseline justify-between gap-4">
+			<h2><span class="eyebrow">01.</span> Featured projects</h2>
+			<a th:href="@{/projects}" class="font-mono text-xs text-muted hover:text-accent">all projects &rarr;</a>
+		</div>
+		<div class="grid gap-4 sm:grid-cols-2">
+			<th:block th:each="item : ${featured}">
+				<article th:replace="~{portfolio/project-card :: card(${item})}"></article>
+			</th:block>
+		</div>
+	</section>
+
 	<section class="space-y-4">
-		<h2><span class="eyebrow">01.</span> Quick links</h2>
+		<h2><span class="eyebrow">02.</span> Quick links</h2>
 		<div class="grid gap-4 sm:grid-cols-2">
 			<a th:href="@{/tasks}" class="card block hover:border-zinc-600">
 				<p class="font-medium">Tasks</p>

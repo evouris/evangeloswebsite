@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Shared by the Projects page and the featured section on Home. -->
+<article th:fragment="card (project)" class="card flex flex-col gap-3">
+	<h2 class="text-lg" th:text="${project.title}">Project name</h2>
+	<p th:if="${!#strings.isEmpty(project.description)}" class="whitespace-pre-line text-sm text-muted"
+	   th:text="${project.description}">What it is and what you used.</p>
+	<ul th:unless="${project.techList.empty}" class="flex flex-wrap gap-2">
+		<li th:each="tech : ${project.techList}" class="tag" th:text="${tech}">Tech</li>
+	</ul>
+	<div th:if="${!#strings.isEmpty(project.repoUrl) or !#strings.isEmpty(project.liveUrl)}"
+		 class="mt-auto flex flex-wrap gap-4 pt-2 font-mono text-xs">
+		<a th:if="${!#strings.isEmpty(project.repoUrl)}" th:href="${project.repoUrl}"
+		   class="text-accent hover:underline" target="_blank" rel="noopener">source &nearr;</a>
+		<a th:if="${!#strings.isEmpty(project.liveUrl)}" th:href="${project.liveUrl}"
+		   class="text-accent hover:underline" target="_blank" rel="noopener">live &nearr;</a>
+	</div>
+</article>
+</body>
+</html>

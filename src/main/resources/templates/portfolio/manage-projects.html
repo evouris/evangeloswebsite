@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Projects', ~{::main})}">
+<head>
+	<title>Manage projects</title>
+</head>
+<body>
+<main class="space-y-8">
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ vim ~/projects</p>
+			<h1>Manage projects</h1>
+		</div>
+		<a th:href="@{/projects}" class="btn-ghost">&larr; Back to projects</a>
+	</header>
+
+	<!-- One form for both adding and editing: editingId is set when editing an existing project. -->
+	<form th:action="${editingId == null} ? @{/projects/manage} : @{/projects/manage/{id}(id=${editingId})}"
+		  th:object="${project}" method="post" class="card grid gap-4 sm:grid-cols-2">
+		<h2 class="sm:col-span-2" th:text="${editingId == null} ? 'Add a project' : 'Edit project'">Add a project</h2>
+		<div>
+			<label class="label" for="title">Title</label>
+			<input class="input" type="text" th:field="*{title}" placeholder="My cool app" required>
+			<span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+		</div>
+		<div>
+			<label class="label" for="techStack">Tech (comma-separated)</label>
+			<input class="input" type="text" th:field="*{techStack}" placeholder="Java, Spring Boot, React">
+		</div>
+		<div class="sm:col-span-2">
+			<label class="label" for="description">Description</label>
+			<textarea class="input min-h-24" th:field="*{description}" placeholder="What it is and what you learned"></textarea>
+		</div>
+		<div>
+			<label class="label" for="repoUrl">Source code link</label>
+			<input class="input" type="url" th:field="*{repoUrl}" placeholder="https://github.com/...">
+			<span class="field-error" th:if="${#fields.hasErrors('repoUrl')}" th:errors="*{repoUrl}"></span>
+		</div>
+		<div>
+			<label class="label" for="liveUrl">Live link</label>
+			<input class="input" type="url" th:field="*{liveUrl}" placeholder="https://...">
+			<span class="field-error" th:if="${#fields.hasErrors('liveUrl')}" th:errors="*{liveUrl}"></span>
+		</div>
+		<div>
+			<label class="label" for="sortOrder">Order (lower shows first)</label>
+			<input class="input" type="number" th:field="*{sortOrder}">
+		</div>
+		<label class="flex cursor-pointer items-center gap-2 self-end pb-2 text-sm">
+			<input type="checkbox" th:field="*{featured}" class="size-4 accent-accent">
+			Feature on the home page
+		</label>
+		<div class="flex gap-3 sm:col-span-2">
+			<button type="submit" class="btn" th:text="${editingId == null} ? 'Add project' : 'Save changes'">Add project</button>
+			<a th:if="${editingId != null}" th:href="@{/projects/manage}" class="btn-ghost">Cancel</a>
+		</div>
+	</form>
+
+	<p th:if="${projects.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">No projects yet. Add one above.</p>
+
+	<ul th:unless="${projects.empty}" class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+		<li th:each="item : ${projects}" class="flex items-center gap-4 bg-surface p-4"
+			th:classappend="${item.id == editingId} ? 'ring-1 ring-inset ring-accent'">
+			<span class="w-8 font-mono text-xs text-zinc-600" th:text="${item.sortOrder}">0</span>
+			<div class="min-w-0 flex-1">
+				<p class="truncate font-medium" th:text="${item.title}">Title</p>
+				<p class="truncate font-mono text-xs text-muted" th:text="${item.techStack}">tech</p>
+			</div>
+			<span th:if="${item.featured}" class="tag text-accent">featured</span>
+			<a th:href="@{/projects/manage/{id}(id=${item.id})}" class="btn-ghost">Edit</a>
+			<form th:action="@{/projects/manage/{id}/delete(id=${item.id})}" method="post">
+				<button type="submit" class="btn-ghost btn-danger">Delete</button>
+			</form>
+		</li>
+	</ul>
+</main>
+</body>
+</html>
