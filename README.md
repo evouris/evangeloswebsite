@@ -29,3 +29,19 @@ Open [http://localhost:8080](http://localhost:8080).
 Shared nav lives in `templates/layout.html`. To add a page later, add a controller method, a template, and a nav link.
 
 Tasks and calendar save to a local H2 file under `data/`.
+
+## Login
+
+Home, About, and Projects are public. Tasks, Calendar, and `/projects/manage` need a login
+(footer link "log in", or go to `/login`).
+
+The username and BCrypt password hash live in `config/application.properties`, which is git-ignored
+so it never reaches GitHub:
+
+```properties
+spring.security.user.name=evangelos
+spring.security.user.password={bcrypt}<hash>
+```
+
+On a fresh clone without that file, Spring Boot prints a random one-time password in the startup log
+(username `user`).

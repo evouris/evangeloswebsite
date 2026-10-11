@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Projects', ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: page('Projects', ~{::main})}">
 <head>
 	<title>Projects</title>
 </head>
@@ -10,7 +10,7 @@
 			<p class="eyebrow">$ ls ~/projects</p>
 			<h1>Projects</h1>
 		</div>
-		<a th:href="@{/projects/manage}" class="btn-ghost">Manage</a>
+		<a sec:authorize="isAuthenticated()" th:href="@{/projects/manage}" class="btn-ghost">Manage</a>
 	</header>
 
 	<p th:if="${projects.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">No projects yet.</p>

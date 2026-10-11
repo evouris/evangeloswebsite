@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:fragment="page (title, content)" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  th:fragment="page (title, content)" lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,13 +18,20 @@
 			</a>
 			<nav>
 				<!-- The active link is picked by matching the page title passed to this layout. -->
-				<ul class="flex flex-wrap gap-1">
+				<ul class="flex flex-wrap items-center gap-1">
 					<li><a th:href="@{/}" class="nav-link" th:classappend="${title == 'Home'} ? 'active'">Home</a></li>
 					<li><a th:href="@{/about}" class="nav-link" th:classappend="${title == 'About'} ? 'active'">About</a></li>
 					<li><a th:href="@{/projects}" class="nav-link" th:classappend="${title == 'Projects'} ? 'active'">Projects</a></li>
-					<li><a th:href="@{/tasks}" class="nav-link" th:classappend="${title == 'Tasks'} ? 'active'">Tasks</a></li>
-					<li><a th:href="@{/calendar}" class="nav-link" th:classappend="${title == 'Calendar'} ? 'active'">Calendar</a></li>
+					<!-- Private pages: only shown when logged in. -->
+					<li sec:authorize="isAuthenticated()"><a th:href="@{/tasks}" class="nav-link" th:classappend="${title == 'Tasks'} ? 'active'">Tasks</a></li>
+					<li sec:authorize="isAuthenticated()"><a th:href="@{/calendar}" class="nav-link" th:classappend="${title == 'Calendar'} ? 'active'">Calendar</a></li>
 					<!-- Add another page later: controller method + template, then a link here. -->
+					<li sec:authorize="isAuthenticated()">
+						<!-- Logout must be a POST form so it carries the CSRF token. -->
+						<form th:action="@{/logout}" method="post">
+							<button type="submit" class="nav-link cursor-pointer">Log out</button>
+						</form>
+					</li>
 				</ul>
 			</nav>
 		</div>
@@ -36,6 +44,7 @@
 	<footer class="border-t border-border">
 		<p class="mx-auto max-w-4xl px-4 py-6 font-mono text-xs text-zinc-600">
 			&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Evangelos · built with Spring Boot + Tailwind
+			<a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="ml-2 hover:text-muted">· log in</a>
 		</p>
 	</footer>
 </body>

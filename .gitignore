@@ -2,6 +2,8 @@ HELP.md
 target/
 node_modules/
 data/
+# Local secrets (login password hash)
+/config/
 starter.zip
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

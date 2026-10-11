@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Home', ~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout :: page('Home', ~{::main})}">
 <head>
 	<title>Home</title>
 </head>
@@ -30,7 +30,7 @@
 		</div>
 	</section>
 
-	<section class="space-y-4">
+	<section sec:authorize="isAuthenticated()" class="space-y-4">
 		<h2><span class="eyebrow">02.</span> Quick links</h2>
 		<div class="grid gap-4 sm:grid-cols-2">
 			<a th:href="@{/tasks}" class="card block hover:border-zinc-600">

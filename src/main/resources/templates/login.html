@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Log in', ~{::main})}">
+<head>
+	<title>Log in</title>
+</head>
+<body>
+<main class="mx-auto max-w-sm space-y-6 pt-6">
+	<header class="space-y-2">
+		<p class="eyebrow">$ sudo login</p>
+		<h1>Log in</h1>
+	</header>
+
+	<p th:if="${param.error}" class="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+		Wrong username or password.
+	</p>
+
+	<!-- th:action adds the hidden CSRF token that Spring Security requires. -->
+	<form th:action="@{/login}" method="post" class="card space-y-4">
+		<div>
+			<label class="label" for="username">Username</label>
+			<input class="input" type="text" id="username" name="username" autocomplete="username" required autofocus>
+		</div>
+		<div>
+			<label class="label" for="password">Password</label>
+			<input class="input" type="password" id="password" name="password" autocomplete="current-password" required>
+		</div>
+		<button type="submit" class="btn w-full justify-center">Log in</button>
+	</form>
+</main>
+</body>
+</html>
