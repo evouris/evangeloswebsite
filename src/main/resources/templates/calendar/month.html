@@ -47,6 +47,18 @@
 								</form>
 							</li>
 						</ul>
+						<!-- Tasks due this day; click one to edit it on the Tasks page. -->
+						<ul class="space-y-1" th:unless="${day.tasks().empty}">
+							<li th:each="todo : ${day.tasks()}">
+								<a th:href="@{/tasks/{id}/edit(id=${todo.id})}"
+								   class="flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs hover:border-zinc-600"
+								   th:classappend="${todo.completed} ? 'text-zinc-600 line-through' : (${todo.overdue} ? 'border-red-500/40 text-red-400' : 'text-zinc-300')"
+								   th:title="'Task: ' + ${todo.title}">
+									<span class="font-mono" th:text="${todo.completed} ? '✓' : '○'">○</span>
+									<span class="min-w-0 truncate" th:text="${todo.title}">task</span>
+								</a>
+							</li>
+						</ul>
 					</div>
 				</th:block>
 			</div>

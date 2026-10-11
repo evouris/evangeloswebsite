@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,6 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.personalsite.tasks.Task;
+import com.personalsite.tasks.TaskRepository;
+
 import jakarta.validation.Valid;
 
 @Controller
@@ -27,8 +31,11 @@ public class CalendarController {
 
 	private final CalendarEventRepository events;
 
-	public CalendarController(CalendarEventRepository events) {
+	private final TaskRepository tasks;
+
+	public CalendarController(CalendarEventRepository events, TaskRepository tasks) {
 		this.events = events;
+		this.tasks = tasks;
 	}
 
 	@GetMapping
@@ -71,11 +78,16 @@ public class CalendarController {
 			.stream()
 			.collect(Collectors.groupingBy(CalendarEvent::getEventDate));
 
+		Map<LocalDate, List<Task>> tasksByDate = tasks.findByDueDateBetween(gridStart, gridEnd)
+			.stream()
+			.sorted(Comparator.comparing(Task::isCompleted).thenComparing(Task::getPriority, Comparator.reverseOrder()))
+			.collect(Collectors.groupingBy(Task::getDueDate));
+
 		List<List<CalendarDay>> weeks = new ArrayList<>();
 		List<CalendarDay> week = new ArrayList<>();
 		for (LocalDate date = gridStart; !date.isAfter(gridEnd); date = date.plusDays(1)) {
 			week.add(new CalendarDay(date, YearMonth.from(date).equals(current),
-					byDate.getOrDefault(date, List.of())));
+					byDate.getOrDefault(date, List.of()), tasksByDate.getOrDefault(date, List.of())));
 			if (week.size() == 7) {
 				weeks.add(week);
 				week = new ArrayList<>();

@@ -10,7 +10,11 @@
 		<h1>Tasks</h1>
 	</header>
 
-	<form th:action="@{/tasks}" th:object="${task}" method="post" class="card grid gap-4 sm:grid-cols-[1fr_12rem]">
+	<!-- One form for both adding and editing: editingId is set when editing an existing task. -->
+	<form th:action="${editingId == null} ? @{/tasks(filter=${filter})} : @{/tasks/{id}(id=${editingId}, filter=${filter})}"
+		  th:object="${task}" method="post" class="card grid gap-4 sm:grid-cols-[1fr_10rem_9rem]"
+		  th:classappend="${editingId != null} ? 'border-accent'">
+		<h2 th:if="${editingId != null}" class="sm:col-span-3">Edit task</h2>
 		<div>
 			<label class="label" for="title">Title</label>
 			<input class="input" type="text" th:field="*{title}" placeholder="What needs doing?" required>
@@ -20,20 +24,37 @@
 			<label class="label" for="dueDate">Due</label>
 			<input class="input" type="date" th:field="*{dueDate}">
 		</div>
-		<div class="sm:col-span-2">
+		<div>
+			<label class="label" for="priority">Priority</label>
+			<select class="input" th:field="*{priority}">
+				<option th:each="p : ${priorities}" th:value="${p}" th:text="${p.label}">Medium</option>
+			</select>
+		</div>
+		<div class="sm:col-span-3">
 			<label class="label" for="notes">Notes</label>
 			<textarea class="input min-h-20" th:field="*{notes}" placeholder="Optional details"></textarea>
 		</div>
-		<div class="sm:col-span-2">
-			<button type="submit" class="btn">Add task</button>
+		<div class="flex gap-3 sm:col-span-3">
+			<button type="submit" class="btn" th:text="${editingId == null} ? 'Add task' : 'Save changes'">Add task</button>
+			<a th:if="${editingId != null}" th:href="@{/tasks(filter=${filter})}" class="btn-ghost">Cancel</a>
 		</div>
 	</form>
 
-	<p th:if="${tasks.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">No tasks yet. Add one above.</p>
+	<nav class="flex flex-wrap gap-1" aria-label="Filter tasks">
+		<a th:each="entry : ${counts}" th:href="@{/tasks(filter=${entry.key})}"
+		   class="nav-link capitalize" th:classappend="${entry.key == filter} ? 'active'">
+			<span th:text="${entry.key}">all</span>
+			<span class="ml-1 font-mono text-xs opacity-60" th:text="${entry.value}">0</span>
+		</a>
+	</nav>
+
+	<p th:if="${tasks.empty}" class="py-8 text-center font-mono text-sm text-zinc-600"
+	   th:text="${filter == 'all'} ? 'No tasks yet. Add one above.' : 'Nothing here.'">No tasks yet.</p>
 
 	<ul class="divide-y divide-border overflow-hidden rounded-lg border border-border" th:unless="${tasks.empty}">
-		<li th:each="item : ${tasks}" class="flex items-start gap-4 bg-surface p-4">
-			<form th:action="@{/tasks/{id}/complete(id=${item.id})}" method="post" class="pt-0.5">
+		<li th:each="item : ${tasks}" class="flex items-start gap-4 bg-surface p-4"
+			th:classappend="${item.id == editingId} ? 'ring-1 ring-inset ring-accent'">
+			<form th:action="@{/tasks/{id}/complete(id=${item.id}, filter=${filter})}" method="post" class="pt-0.5">
 				<button type="submit"
 						class="flex size-5 cursor-pointer items-center justify-center rounded border transition"
 						th:classappend="${item.completed} ? 'border-accent bg-accent text-bg' : 'border-zinc-600 hover:border-accent'"
@@ -44,17 +65,27 @@
 			</form>
 
 			<div class="min-w-0 flex-1 space-y-1">
-				<p class="font-medium" th:classappend="${item.completed} ? 'text-zinc-500 line-through'" th:text="${item.title}">Title</p>
-				<p th:if="${item.dueDate != null}" class="font-mono text-xs text-muted">
-					due <time th:datetime="${item.dueDate}" th:text="${#temporals.format(item.dueDate, 'EEE, MMM d')}">date</time>
+				<div class="flex flex-wrap items-center gap-2">
+					<p class="font-medium" th:classappend="${item.completed} ? 'text-zinc-500 line-through'" th:text="${item.title}">Title</p>
+					<span th:unless="${item.completed}" class="tag"
+						  th:classappend="${item.priority.name() == 'HIGH'} ? 'border-red-500/40 text-red-400' : (${item.priority.name() == 'MEDIUM'} ? 'border-amber-500/40 text-amber-400' : '')"
+						  th:text="${item.priority.label}">Medium</span>
+				</div>
+				<p th:if="${item.dueDate != null}" class="font-mono text-xs"
+				   th:classappend="${item.overdue} ? 'text-red-400' : 'text-muted'">
+					<span th:if="${item.overdue}">overdue &middot; </span>due
+					<time th:datetime="${item.dueDate}" th:text="${#temporals.format(item.dueDate, 'EEE, MMM d')}">date</time>
 				</p>
 				<p th:if="${item.notes != null and !#strings.isEmpty(item.notes)}"
 				   class="whitespace-pre-line text-sm text-muted" th:text="${item.notes}">Notes</p>
 			</div>
 
-			<form th:action="@{/tasks/{id}/delete(id=${item.id})}" method="post">
-				<button type="submit" class="btn-ghost btn-danger">Delete</button>
-			</form>
+			<div class="flex gap-2">
+				<a th:href="@{/tasks/{id}/edit(id=${item.id}, filter=${filter})}" class="btn-ghost">Edit</a>
+				<form th:action="@{/tasks/{id}/delete(id=${item.id}, filter=${filter})}" method="post">
+					<button type="submit" class="btn-ghost btn-danger">Delete</button>
+				</form>
+			</div>
 		</li>
 	</ul>
 </main>
