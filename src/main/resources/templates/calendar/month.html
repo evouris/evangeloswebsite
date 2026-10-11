@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Calendar', ~{::main})}">
+<head>
+	<title>Calendar</title>
+</head>
+<body>
+<main class="space-y-8">
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ cal</p>
+			<h1 th:text="${#temporals.format(current.atDay(1), 'MMMM yyyy')}">Month</h1>
+		</div>
+		<div class="flex gap-2">
+			<a class="btn-ghost" th:href="@{/calendar(year=${previous.year}, month=${previous.monthValue})}">&larr; Prev</a>
+			<a class="btn-ghost" th:href="@{/calendar}">Today</a>
+			<a class="btn-ghost" th:href="@{/calendar(year=${next.year}, month=${next.monthValue})}">Next &rarr;</a>
+		</div>
+	</header>
+
+	<!-- Scrolls sideways on narrow screens instead of squashing the 7 columns. -->
+	<div class="overflow-x-auto">
+		<div class="min-w-[42rem] overflow-hidden rounded-lg border border-border">
+			<div class="grid grid-cols-7 border-b border-border bg-surface font-mono text-xs uppercase tracking-wider text-muted">
+				<div class="px-2 py-2" th:each="name : ${ {'Sun','Mon','Tue','Wed','Thu','Fri','Sat'} }" th:text="${name}">Sun</div>
+			</div>
+			<div class="grid grid-cols-7 gap-px bg-border">
+				<th:block th:each="week : ${weeks}">
+					<div th:each="day : ${week}" class="min-h-24 space-y-1 p-2"
+						 th:classappend="${day.inMonth()} ? 'bg-bg' : 'bg-bg/60 text-zinc-700'">
+						<p class="font-mono text-xs"
+						   th:classappend="${day.date() == #temporals.createToday()} ? 'inline-flex size-6 items-center justify-center rounded-full bg-accent font-semibold text-bg'"
+						   th:text="${day.date().dayOfMonth}">1</p>
+						<ul class="space-y-1">
+							<li th:each="item : ${day.events()}"
+								class="group flex items-start gap-1 rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent"
+								th:title="${item.notes}">
+								<span class="min-w-0 flex-1 truncate">
+									<span th:if="${item.startTime != null}" class="font-mono opacity-70"
+										  th:text="${#temporals.format(item.startTime, 'HH:mm')}">time</span>
+									<span th:text="${item.title}">title</span>
+								</span>
+								<form th:action="@{/calendar/{id}/delete(id=${item.id})}" method="post">
+									<input type="hidden" name="year" th:value="${current.year}">
+									<input type="hidden" name="month" th:value="${current.monthValue}">
+									<button type="submit" class="cursor-pointer opacity-0 transition group-hover:opacity-100 hover:text-red-400 focus:opacity-100"
+											aria-label="Delete event" title="Delete">&times;</button>
+								</form>
+							</li>
+						</ul>
+					</div>
+				</th:block>
+			</div>
+		</div>
+	</div>
+
+	<section class="space-y-4">
+		<h2><span class="eyebrow">+</span> Add event</h2>
+		<form th:action="@{/calendar}" th:object="${event}" method="post" class="card grid gap-4 sm:grid-cols-[1fr_10rem_8rem]">
+			<input type="hidden" name="year" th:value="${current.year}">
+			<input type="hidden" name="month" th:value="${current.monthValue}">
+			<div>
+				<label class="label" for="title">Title</label>
+				<input class="input" type="text" th:field="*{title}" placeholder="Event name" required>
+				<span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+			</div>
+			<div>
+				<label class="label" for="eventDate">Date</label>
+				<input class="input" type="date" th:field="*{eventDate}" required>
+				<span class="field-error" th:if="${#fields.hasErrors('eventDate')}" th:errors="*{eventDate}"></span>
+			</div>
+			<div>
+				<label class="label" for="startTime">Time</label>
+				<input class="input" type="time" th:field="*{startTime}">
+			</div>
+			<div class="sm:col-span-3">
+				<label class="label" for="notes">Notes</label>
+				<textarea class="input min-h-20" th:field="*{notes}" placeholder="Optional details"></textarea>
+			</div>
+			<div class="sm:col-span-3">
+				<button type="submit" class="btn">Add event</button>
+			</div>
+		</form>
+	</section>
+</main>
+</body>
+</html>

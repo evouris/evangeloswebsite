@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('About', ~{::main})}">
+<head>
+	<title>About</title>
+</head>
+<body>
+<main class="space-y-10">
+	<header class="space-y-2">
+		<p class="eyebrow">$ cat about.md</p>
+		<h1>About</h1>
+	</header>
+
+	<!-- TODO: write about yourself here. -->
+	<section class="max-w-2xl space-y-4 text-muted">
+		<p>Hello, I'm Evangelos, a computer science student with a passion for building web applications and mobile apps. I'm a quick learner and I'm always looking for new challenges. Also I go to Iowa State University and I am a Freshman.</p>
+	</section>
+
+	<section class="space-y-4">
+		<h2><span class="eyebrow">01.</span> Skills &amp; interests</h2>
+		<!-- TODO: replace these with your own. -->
+		<ul class="flex flex-wrap gap-2">
+			<li class="tag">Java</li>
+			<li class="tag">Spring Boot</li>
+			<li class="tag">HTML &amp; CSS</li>
+			<li class="tag">Tailwind</li>
+		</ul>
+	</section>
+</main>
+</body>
+</html>

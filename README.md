@@ -1,0 +1,31 @@
+# evangeloswebsite
+
+Personal site: Spring Boot serves Thymeleaf HTML. You style it with HTML, CSS, and Tailwind.
+
+## Run
+
+In one terminal:
+
+```bash
+npm install
+npm run watch:css
+```
+
+In another:
+
+```bash
+./mvnw spring-boot:run
+```
+
+On Windows you can use `mvnw.cmd spring-boot:run` instead. If that fails, set `JAVA_HOME` to your JDK (for example `C:\Program Files\Java\jdk-27`) and run Maven from there.
+
+Open [http://localhost:8080](http://localhost:8080).
+
+## Where to edit
+
+- HTML: `src/main/resources/templates/`
+- CSS / Tailwind: `src/main/resources/static/css/input.css` (compiled to `app.css`)
+
+Shared nav lives in `templates/layout.html`. To add a page later, add a controller method, a template, and a nav link.
+
+Tasks and calendar save to a local H2 file under `data/`.

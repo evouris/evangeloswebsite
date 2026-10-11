@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Home', ~{::main})}">
+<head>
+	<title>Home</title>
+</head>
+<body>
+<main class="space-y-16">
+	<section class="space-y-5 pt-6">
+		<p class="eyebrow">$ whoami</p>
+		<h1 class="text-4xl sm:text-5xl">Hi, I'm Evangelos.</h1>
+		<!-- TODO: replace with your own one-liner. -->
+		<p class="max-w-2xl text-lg text-muted">
+			I build things for the web. This is where I keep my projects, my tasks, and my calendar.
+		</p>
+		<div class="flex flex-wrap gap-3">
+			<a th:href="@{/projects}" class="btn">See my projects</a>
+			<a th:href="@{/about}" class="btn-ghost">About me</a>
+		</div>
+	</section>
+
+	<section class="space-y-4">
+		<h2><span class="eyebrow">01.</span> Quick links</h2>
+		<div class="grid gap-4 sm:grid-cols-2">
+			<a th:href="@{/tasks}" class="card block hover:border-zinc-600">
+				<p class="font-medium">Tasks</p>
+				<p class="text-sm text-muted">What I'm working on and what's due.</p>
+			</a>
+			<a th:href="@{/calendar}" class="card block hover:border-zinc-600">
+				<p class="font-medium">Calendar</p>
+				<p class="text-sm text-muted">Upcoming events by month.</p>
+			</a>
+		</div>
+	</section>
+</main>
+</body>
+</html>

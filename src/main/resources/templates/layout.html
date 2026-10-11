@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="page (title, content)" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title th:text="${title} + ' · Evangelos'">Site</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+	<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="flex min-h-screen flex-col">
+	<header class="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur">
+		<div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+			<a th:href="@{/}" class="font-mono text-sm font-medium text-zinc-100 hover:text-accent">
+				<span class="text-accent">~/</span>evangelos
+			</a>
+			<nav>
+				<!-- The active link is picked by matching the page title passed to this layout. -->
+				<ul class="flex flex-wrap gap-1">
+					<li><a th:href="@{/}" class="nav-link" th:classappend="${title == 'Home'} ? 'active'">Home</a></li>
+					<li><a th:href="@{/about}" class="nav-link" th:classappend="${title == 'About'} ? 'active'">About</a></li>
+					<li><a th:href="@{/projects}" class="nav-link" th:classappend="${title == 'Projects'} ? 'active'">Projects</a></li>
+					<li><a th:href="@{/tasks}" class="nav-link" th:classappend="${title == 'Tasks'} ? 'active'">Tasks</a></li>
+					<li><a th:href="@{/calendar}" class="nav-link" th:classappend="${title == 'Calendar'} ? 'active'">Calendar</a></li>
+					<!-- Add another page later: controller method + template, then a link here. -->
+				</ul>
+			</nav>
+		</div>
+	</header>
+
+	<div class="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+		<main th:replace="${content}"></main>
+	</div>
+
+	<footer class="border-t border-border">
+		<p class="mx-auto max-w-4xl px-4 py-6 font-mono text-xs text-zinc-600">
+			&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Evangelos · built with Spring Boot + Tailwind
+		</p>
+	</footer>
+</body>
+</html>

@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #09090b;
+  --color-surface: #18181b;
+  --color-border: #27272a;
+  --color-muted: #a1a1aa;
+  --color-accent: #60a5fa;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-zinc-100 antialiased;
+  }
+  h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  h2 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+  ::selection {
+    @apply bg-accent text-bg;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border border-border bg-surface p-5;
+  }
+
+  .btn {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-bg transition hover:opacity-90;
+  }
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted transition hover:border-zinc-600 hover:text-zinc-100;
+  }
+  .btn-danger {
+    @apply hover:border-red-500/50 hover:text-red-400;
+  }
+
+  .label {
+    @apply mb-1 block font-mono text-xs uppercase tracking-wider text-muted;
+  }
+  .input {
+    @apply w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none;
+    color-scheme: dark; /* dark date/time pickers */
+  }
+  .field-error {
+    @apply mt-1 block text-xs text-red-400;
+  }
+
+  .nav-link {
+    @apply rounded-md px-3 py-1.5 text-sm text-muted transition-colors hover:text-zinc-100;
+  }
+  .nav-link.active {
+    @apply bg-surface text-accent;
+  }
+
+  .eyebrow {
+    @apply font-mono text-sm text-accent;
+  }
+  .tag {
+    @apply rounded border border-border px-2 py-0.5 font-mono text-xs text-muted;
+  }
+}
