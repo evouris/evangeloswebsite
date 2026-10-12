@@ -30,4 +30,8 @@ public class PortfolioController {
 		return "portfolio/projects";
 	}
 
+	@GetMapping("/now")
+	public String now() {
+		return "portfolio/now";
+	}
 }
