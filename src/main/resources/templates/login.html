@@ -24,6 +24,11 @@
 			<label class="label" for="password">Password</label>
 			<input class="input" type="password" id="password" name="password" autocomplete="current-password" required>
 		</div>
+		<!-- "remember-me" is the parameter name Spring Security looks for. -->
+		<label class="flex cursor-pointer items-center gap-2 text-sm text-muted">
+			<input type="checkbox" name="remember-me" class="size-4 accent-accent">
+			Keep me signed in on this device
+		</label>
 		<button type="submit" class="btn w-full justify-center">Log in</button>
 	</form>
 </main>

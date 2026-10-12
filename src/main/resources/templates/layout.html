@@ -43,10 +43,14 @@
 	</div>
 
 	<footer class="border-t border-border">
-		<p class="mx-auto max-w-4xl px-4 py-6 font-mono text-xs text-zinc-600">
-			&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Evangelos · built with Spring Boot + Tailwind
-			<a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="ml-2 hover:text-muted">· log in</a>
-		</p>
+		<div class="mx-auto flex max-w-4xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-6 font-mono text-xs text-zinc-600">
+			<p>&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Evangelos · built with Spring Boot + Tailwind</p>
+			<a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="hover:text-muted">· log in</a>
+			<!-- For a lost phone etc.: forgets every "keep me signed in" device. -->
+			<form sec:authorize="isAuthenticated()" th:action="@{/account/sign-out-everywhere}" method="post">
+				<button type="submit" class="cursor-pointer hover:text-red-400">· sign out all devices</button>
+			</form>
+		</div>
 	</footer>
 </body>
 </html>

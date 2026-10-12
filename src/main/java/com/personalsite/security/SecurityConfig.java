@@ -1,8 +1,12 @@
 package com.personalsite.security;
 
+import java.time.Duration;
+import java.util.UUID;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -12,8 +16,18 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+	/** How long a device stays signed in after its last visit when "keep me signed in" is ticked. */
+	private static final Duration REMEMBER_DEVICE_FOR = Duration.ofDays(30);
+
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, UserDetailsService users,
+			JpaPersistentTokenRepository tokens) throws Exception {
+		// The key only links Spring's internal remember-me pieces together; the cookie itself is checked
+		// against the database, so a fresh random key on each start is fine.
+		String key = UUID.randomUUID().toString();
+		DeviceRememberMeServices rememberMe = new DeviceRememberMeServices(key, users, tokens);
+		rememberMe.setTokenValiditySeconds((int) REMEMBER_DEVICE_FOR.toSeconds());
+
 		http
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/", "/about", "/projects", "/login", "/css/**", "/error", "/favicon.ico", "/now").permitAll()
@@ -21,6 +35,9 @@ public class SecurityConfig {
 			.formLogin(form -> form
 				.loginPage("/login")
 				.defaultSuccessUrl("/tasks"))
+			.rememberMe(remember -> remember
+				.rememberMeServices(rememberMe)
+				.key(key))
 			.logout(logout -> logout
 				.logoutSuccessUrl("/"));
 		return http.build();
