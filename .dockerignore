@@ -1,0 +1,8 @@
+# Keep the Docker build small and never bake local data or secrets into the image.
+target/
+node_modules/
+data/
+config/
+.git/
+.vscode/
+.idea/

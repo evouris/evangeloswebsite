@@ -1,5 +1,7 @@
 package com.personalsite.tasks;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 
@@ -39,8 +43,11 @@ public class TaskController {
 
 	private final TaskRepository tasks;
 
-	public TaskController(TaskRepository tasks) {
+	private final IcsTaskImporter importer;
+
+	public TaskController(TaskRepository tasks, IcsTaskImporter importer) {
 		this.tasks = tasks;
+		this.importer = importer;
 	}
 
 	@GetMapping
@@ -87,6 +94,26 @@ public class TaskController {
 			tasks.save(task);
 		});
 		return redirectTo(filter);
+	}
+
+	/** Upload an .ics file (e.g. exported from Canvas) and turn its events into tasks. */
+	@PostMapping("/import")
+	public String importIcs(@RequestParam("file") MultipartFile file,
+			@RequestParam(defaultValue = "false") boolean assignmentsOnly,
+			@RequestParam(defaultValue = "false") boolean skipPast, RedirectAttributes redirect) {
+		if (file.isEmpty()) {
+			redirect.addFlashAttribute("importError", "Choose an .ics file first.");
+			return redirectTo("all");
+		}
+		try {
+			String ics = new String(file.getBytes(), StandardCharsets.UTF_8);
+			redirect.addFlashAttribute("importMessage", importer.importIcs(ics, assignmentsOnly, skipPast).summary());
+		}
+		catch (IOException | IllegalArgumentException ex) {
+			redirect.addFlashAttribute("importError",
+					ex instanceof IllegalArgumentException ? ex.getMessage() : "Couldn't read that file.");
+		}
+		return redirectTo("all");
 	}
 
 	@PostMapping("/{id}/complete")

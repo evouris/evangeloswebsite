@@ -40,6 +40,39 @@
 		</div>
 	</form>
 
+	<p th:if="${importMessage}" class="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent"
+	   th:text="${importMessage}">Imported 3 new tasks.</p>
+	<p th:if="${importError}" class="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-400"
+	   th:text="${importError}">Couldn't read that file.</p>
+
+	<!-- Collapsed by default; opens to upload a Canvas (or any) .ics calendar file. -->
+	<details class="card group">
+		<summary class="cursor-pointer list-none font-medium">
+			<span class="eyebrow mr-1 inline-block transition group-open:rotate-90">&rsaquo;</span>
+			Import from Canvas (.ics)
+		</summary>
+		<form th:action="@{/tasks/import}" method="post" enctype="multipart/form-data" class="mt-4 space-y-4">
+			<p class="text-sm text-muted">
+				In Canvas, open <strong class="text-zinc-300">Calendar</strong> and click <strong class="text-zinc-300">Calendar Feed</strong>
+				(bottom right). Open that link to download an <code class="font-mono">.ics</code> file, then upload it here.
+				Re-upload any time: existing tasks get updated instead of duplicated.
+			</p>
+			<input class="input file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-surface file:px-3 file:py-1 file:text-sm file:text-zinc-100"
+				   type="file" name="file" accept=".ics,text/calendar" required>
+			<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+				<label class="flex cursor-pointer items-center gap-2">
+					<input type="checkbox" name="assignmentsOnly" value="true" checked class="size-4 accent-accent">
+					Only assignments (skip lectures and other events)
+				</label>
+				<label class="flex cursor-pointer items-center gap-2">
+					<input type="checkbox" name="skipPast" value="true" checked class="size-4 accent-accent">
+					Skip anything already past due
+				</label>
+			</div>
+			<button type="submit" class="btn">Import</button>
+		</form>
+	</details>
+
 	<nav class="flex flex-wrap gap-1" aria-label="Filter tasks">
 		<a th:each="entry : ${counts}" th:href="@{/tasks(filter=${entry.key})}"
 		   class="nav-link capitalize" th:classappend="${entry.key == filter} ? 'active'">
@@ -70,6 +103,7 @@
 					<span th:unless="${item.completed}" class="tag"
 						  th:classappend="${item.priority.name() == 'HIGH'} ? 'border-red-500/40 text-red-400' : (${item.priority.name() == 'MEDIUM'} ? 'border-amber-500/40 text-amber-400' : '')"
 						  th:text="${item.priority.label}">Medium</span>
+					<span th:if="${item.imported}" class="tag" title="Imported from a calendar file">canvas</span>
 				</div>
 				<p th:if="${item.dueDate != null}" class="font-mono text-xs"
 				   th:classappend="${item.overdue} ? 'text-red-400' : 'text-muted'">

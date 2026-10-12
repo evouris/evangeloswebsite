@@ -33,6 +33,9 @@ public class Task {
 	@Enumerated(EnumType.STRING)
 	private Priority priority = Priority.MEDIUM;
 
+	/** UID of the calendar event this task was imported from (e.g. a Canvas assignment), or null. */
+	private String externalId;
+
 	public Long getId() {
 		return id;
 	}
@@ -76,6 +79,18 @@ public class Task {
 
 	public void setPriority(Priority priority) {
 		this.priority = priority;
+	}
+
+	public String getExternalId() {
+		return externalId;
+	}
+
+	public void setExternalId(String externalId) {
+		this.externalId = externalId;
+	}
+
+	public boolean isImported() {
+		return externalId != null;
 	}
 
 	public boolean isOverdue() {
