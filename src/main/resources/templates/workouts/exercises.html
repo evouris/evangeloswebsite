@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Workout', ~{::main})}">
+<head>
+	<title>Exercises</title>
+</head>
+<body>
+<main class="space-y-8">
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ ls exercises/</p>
+			<h1>Exercises</h1>
+		</div>
+		<nav th:replace="~{workouts/subnav :: subnav('exercises')}"></nav>
+	</header>
+
+	<p th:if="${message}" class="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent" th:text="${message}">Added.</p>
+	<p th:if="${error}" class="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-400" th:text="${error}">Error.</p>
+
+	<!-- Collapsed unless the last attempt had an error to fix. -->
+	<details class="card group" th:open="${#fields.hasErrors('exercise.*')}">
+		<summary class="cursor-pointer list-none font-medium">
+			<span class="eyebrow mr-1 inline-block transition group-open:rotate-90">&rsaquo;</span>
+			Add your own exercise
+		</summary>
+		<form th:action="@{/workouts/exercises}" th:object="${exercise}" method="post" class="mt-4 grid gap-4 sm:grid-cols-2">
+			<div class="sm:col-span-2">
+				<label class="label" for="name">Name</label>
+				<input class="input" type="text" th:field="*{name}" maxlength="100" placeholder="e.g. Landmine Press" required>
+				<span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+			</div>
+			<div>
+				<label class="label" for="muscleGroup">Muscle group</label>
+				<select class="input" th:field="*{muscleGroup}">
+					<option th:each="g : ${muscleGroups}" th:value="${g}" th:text="${g.label}">Chest</option>
+				</select>
+			</div>
+			<div>
+				<label class="label" for="equipment">Equipment</label>
+				<select class="input" th:field="*{equipment}">
+					<option th:each="e : ${equipment}" th:value="${e}" th:text="${e.label}">Barbell</option>
+				</select>
+			</div>
+			<fieldset class="sm:col-span-2">
+				<legend class="label">What do you log for each set?</legend>
+				<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+					<label th:each="t : ${trackings}" class="flex cursor-pointer items-center gap-2">
+						<input type="radio" th:field="*{tracking}" th:value="${t}" class="size-4 accent-accent">
+						<span th:text="${t.label}">Weight + reps</span>
+					</label>
+				</div>
+			</fieldset>
+			<div class="sm:col-span-2"><button type="submit" class="btn">Add exercise</button></div>
+		</form>
+	</details>
+
+	<section class="space-y-4" data-picker>
+		<input class="input" type="search" placeholder="Search exercises…" aria-label="Search exercises" data-picker-search>
+		<nav class="flex flex-wrap gap-1.5" aria-label="Filter by muscle group">
+			<a th:href="@{/workouts/exercises}" class="chip" th:classappend="${group == null} ? 'active'">
+				All <span class="opacity-60" th:text="${total}">130</span>
+			</a>
+			<a th:each="g : ${muscleGroups}" th:href="@{/workouts/exercises(group=${g})}" class="chip"
+			   th:classappend="${group == g} ? 'active'" th:text="${g.label}">Chest</a>
+		</nav>
+
+		<ul class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+			<li th:each="ex : ${exercises}" class="flex items-center gap-3 bg-surface px-4 py-3"
+				th:attr="data-picker-item=${#strings.toLowerCase(ex.name + ' ' + ex.equipment.label + ' ' + ex.muscleGroup.label)}">
+				<a th:href="@{/workouts/exercises/{id}(id=${ex.id})}" class="min-w-0 flex-1">
+					<p class="truncate font-medium hover:text-accent" th:text="${ex.name}">Bench Press</p>
+					<p class="font-mono text-xs text-zinc-600">
+						<span th:text="${ex.muscleGroup.label}">Chest</span> &middot;
+						<span th:text="${ex.equipment.label}">Barbell</span> &middot;
+						<span th:text="${ex.tracking.label}">Weight + reps</span>
+					</p>
+				</a>
+				<span th:if="${ex.custom}" class="tag">custom</span>
+				<form th:if="${ex.custom}" th:action="@{/workouts/exercises/{id}/delete(id=${ex.id})}" method="post">
+					<button type="submit" class="icon-btn hover:text-red-400" aria-label="Delete exercise" title="Delete"
+							th:attr="data-confirm=|Delete ${ex.name}?|">&times;</button>
+				</form>
+				<span class="text-zinc-600" aria-hidden="true">&rsaquo;</span>
+			</li>
+		</ul>
+		<p class="hidden py-6 text-center text-sm text-muted" data-picker-empty>No match.</p>
+	</section>
+
+	<script th:src="@{/js/workout.js}" defer></script>
+</main>
+</body>
+</html>

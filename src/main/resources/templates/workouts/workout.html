@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Workout', ~{::main})}">
+<head>
+	<title>Workout</title>
+</head>
+<body>
+<main class="space-y-6 pb-24" th:with="pct=${workout.totalSets == 0 ? 0 : workout.completedSets * 100 / workout.totalSets}">
+	<a th:href="@{/workouts}" class="font-mono text-xs text-muted hover:text-accent">&larr; all workouts</a>
+
+	<header class="space-y-3">
+		<div class="flex flex-wrap items-start justify-between gap-3">
+			<div class="min-w-0 space-y-1">
+				<p class="eyebrow" th:text="${#temporals.format(workout.performedOn, 'EEEE, MMM d, yyyy')}">Tuesday, Oct 14, 2026</p>
+				<h1 class="break-words" th:text="${workout.name}">Push Day</h1>
+			</div>
+			<!-- Live timer while in progress; total time once finished. -->
+			<div class="text-right font-mono">
+				<p class="label mb-0" th:text="${workout.finished} ? 'Duration' : 'Elapsed'">Elapsed</p>
+				<p th:if="${!workout.finished}" class="text-2xl tabular-nums text-zinc-100"
+				   th:attr="data-elapsed=${workout.elapsedSeconds}">0:00</p>
+				<p th:if="${workout.finished}" class="text-2xl tabular-nums text-zinc-100"
+				   th:text="${workout.durationLabel ?: '—'}">1h 05m</p>
+			</div>
+		</div>
+
+		<p th:if="${workout.notes != null}" class="whitespace-pre-line text-sm text-muted" th:text="${workout.notes}">Notes</p>
+
+		<details class="group">
+			<summary class="cursor-pointer list-none font-mono text-xs text-muted hover:text-zinc-100">
+				<span class="mr-1 inline-block transition group-open:rotate-90">&rsaquo;</span>Edit name, date &amp; notes
+			</summary>
+			<form th:action="@{/workouts/{id}(id=${workout.id})}" method="post" class="card mt-3 grid gap-4 sm:grid-cols-[1fr_11rem]">
+				<div>
+					<label class="label" for="name">Name</label>
+					<input class="input" type="text" id="name" name="name" th:value="${workout.name}" maxlength="100" required>
+				</div>
+				<div>
+					<label class="label" for="performedOn">Date</label>
+					<input class="input" type="date" id="performedOn" name="performedOn" th:value="${workout.performedOn}">
+				</div>
+				<div class="sm:col-span-2">
+					<label class="label" for="notes">Notes</label>
+					<textarea class="input min-h-20" id="notes" name="notes" maxlength="2000"
+							  placeholder="How did it feel? Sleep, energy, anything to remember next time"
+							  th:text="${workout.notes}"></textarea>
+				</div>
+				<div class="sm:col-span-2"><button type="submit" class="btn">Save</button></div>
+			</form>
+		</details>
+	</header>
+
+	<!-- Shown once, right after hitting Finish. -->
+	<section th:if="${finished}" class="card border-accent/60 bg-accent/5 text-center">
+		<p class="text-3xl">&#127942;</p>
+		<h2 class="mt-2">Workout complete</h2>
+		<p class="mt-1 font-mono text-sm text-muted">
+			<span th:text="|${workout.completedSets} sets|">18 sets</span>
+			<th:block th:if="${workout.volume > 0}">&middot; <span th:text="|${#numbers.formatInteger(workout.volume, 1, 'COMMA')} lb|">12,000 lb</span></th:block>
+			<th:block th:if="${workout.durationLabel != null}">&middot; <span th:text="${workout.durationLabel}">1h</span></th:block>
+			<th:block th:unless="${records.empty}">&middot; <span class="text-amber-400" th:text="|${records.size()} PR${records.size() == 1 ? '' : 's'}|">2 PRs</span></th:block>
+		</p>
+	</section>
+
+	<!-- Progress, pinned under the site header while you scroll through exercises. -->
+	<div style="top: var(--header-h, 3.6rem)" class="sticky z-[5] -mx-4 border-y border-border bg-bg/90 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-lg sm:border">
+		<div class="flex items-center justify-between font-mono text-xs">
+			<span><span class="text-zinc-100" data-progress-done th:text="${workout.completedSets}">3</span><span class="text-muted"> / <span data-progress-total th:text="${workout.totalSets}">18</span> sets</span></span>
+			<span class="text-muted"><span data-progress-volume th:text="${#numbers.formatInteger(workout.volume, 1, 'COMMA')}">1,200</span> lb</span>
+		</div>
+		<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-surface">
+			<div class="h-full rounded-full bg-accent transition-all duration-300" data-progress-bar th:style="|width: ${pct}%|"></div>
+		</div>
+	</div>
+
+	<p th:if="${workout.exercises.empty}" class="card py-10 text-center text-sm text-muted">
+		No exercises yet. Add your first one below.
+	</p>
+
+	<!-- One card per exercise -->
+	<section th:each="entry, entryStat : ${workout.exercises}" th:id="|entry-${entry.id}|" class="card scroll-mt-32 space-y-3 p-3 sm:p-5"
+			 th:with="tracking=${entry.exercise.tracking.name()}, prev=${previous.get(entry.id)}">
+		<div class="flex items-start justify-between gap-2">
+			<div class="min-w-0">
+				<a th:href="@{/workouts/exercises/{id}(id=${entry.exercise.id})}"
+				   class="font-semibold text-accent hover:underline" th:text="${entry.exercise.name}"
+				   title="See history and records">Bench Press</a>
+				<p class="mt-0.5 font-mono text-xs text-zinc-600">
+					<span th:text="${entry.exercise.muscleGroup.label}">Chest</span> &middot;
+					<span th:text="${entry.exercise.equipment.label}">Barbell</span>
+				</p>
+			</div>
+			<div class="flex shrink-0 items-center">
+				<form th:action="@{/workouts/{id}/exercises/{e}/move(id=${workout.id}, e=${entry.id})}" method="post" class="flex">
+					<button type="submit" name="direction" value="up" class="icon-btn" title="Move up" aria-label="Move up"
+							th:disabled="${entryStat.first}" th:classappend="${entryStat.first} ? 'invisible'">&uarr;</button>
+					<button type="submit" name="direction" value="down" class="icon-btn" title="Move down" aria-label="Move down"
+							th:disabled="${entryStat.last}" th:classappend="${entryStat.last} ? 'invisible'">&darr;</button>
+				</form>
+				<form th:action="@{/workouts/{id}/exercises/{e}/delete(id=${workout.id}, e=${entry.id})}" method="post">
+					<button type="submit" class="icon-btn hover:text-red-400" title="Remove exercise" aria-label="Remove exercise"
+							th:attr="data-confirm=|Remove ${entry.exercise.name} from this workout?|">&times;</button>
+				</form>
+			</div>
+		</div>
+
+		<!-- Column headings -->
+		<div class="set-row py-0 font-mono text-[10px] uppercase tracking-wider text-zinc-600"
+			 th:classappend="${tracking == 'REPS'} ? 'reps-only'">
+			<span class="text-center">Set</span>
+			<span>Previous</span>
+			<th:block th:switch="${tracking}">
+				<th:block th:case="'WEIGHT_REPS'"><span class="text-center">lb</span><span class="text-center">Reps</span></th:block>
+				<th:block th:case="'REPS'"><span class="text-center">Reps</span></th:block>
+				<th:block th:case="'DURATION'"><span class="text-center">Min</span><span class="text-center">Mi</span></th:block>
+			</th:block>
+			<span class="text-center">&check;</span>
+			<span></span>
+		</div>
+
+		<!-- One form per set: works as plain HTML, and workout.js saves it in the background. -->
+		<form th:each="set, setStat : ${entry.sets}"
+			  th:action="@{/workouts/{id}/sets/{s}(id=${workout.id}, s=${set.id})}" method="post"
+			  class="set-row" th:classappend="${tracking == 'REPS'} ? 'reps-only'" data-set-form
+			  th:attr="data-set-id=${set.id}, data-done=${set.completed}, data-warmup=${set.warmup}, data-pr=${records.contains(set.id)}">
+			<input type="hidden" name="entryId" th:value="${entry.id}">
+			<!-- First submit button = what Enter presses: just save the numbers. -->
+			<button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
+			<button type="submit" name="toggleWarmup" value="true" class="set-label"
+					title="Tap to mark as warm-up" th:text="${entry.labels[setStat.index]}">1</button>
+			<span class="truncate font-mono text-xs text-zinc-500">
+				<span class="pr-badge">PR</span><span th:text="${prev != null and setStat.index < prev.size() and !#strings.isEmpty(prev[setStat.index])} ? ${prev[setStat.index]} : '—'">135 × 8</span>
+			</span>
+			<th:block th:switch="${tracking}">
+				<th:block th:case="'WEIGHT_REPS'">
+					<input class="set-input" type="number" name="weight" inputmode="decimal" step="any" min="0" placeholder="lb"
+						   aria-label="Weight in pounds" th:value="${set.weightText}">
+					<input class="set-input" type="number" name="reps" inputmode="numeric" step="1" min="0" placeholder="reps"
+						   aria-label="Reps" th:value="${set.reps}">
+				</th:block>
+				<th:block th:case="'REPS'">
+					<input class="set-input" type="number" name="reps" inputmode="numeric" step="1" min="0" placeholder="reps"
+						   aria-label="Reps" th:value="${set.reps}">
+				</th:block>
+				<th:block th:case="'DURATION'">
+					<input class="set-input" type="number" name="minutes" inputmode="decimal" step="any" min="0" placeholder="min"
+						   aria-label="Minutes" th:value="${set.minutesText}">
+					<input class="set-input" type="number" name="distance" inputmode="decimal" step="any" min="0" placeholder="mi"
+						   aria-label="Distance in miles" th:value="${set.distanceText}">
+				</th:block>
+			</th:block>
+			<button type="submit" name="toggle" value="true" class="check-btn" aria-label="Mark set done" title="Mark set done">
+				<svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg>
+			</button>
+			<button type="submit" class="icon-btn size-6 hover:text-red-400" aria-label="Delete set" title="Delete set"
+					th:formaction="@{/workouts/{id}/sets/{s}/delete(id=${workout.id}, s=${set.id})}">&times;</button>
+		</form>
+
+		<form th:action="@{/workouts/{id}/exercises/{e}/sets(id=${workout.id}, e=${entry.id})}" method="post">
+			<button type="submit" class="w-full cursor-pointer rounded-md border border-dashed border-border py-2 font-mono text-xs text-muted transition hover:border-accent hover:text-accent">
+				+ Add set
+			</button>
+		</form>
+	</section>
+
+	<!-- Exercise picker. Opens automatically when the workout is empty. -->
+	<details id="end" class="card group scroll-mt-32" th:open="${workout.exercises.empty}">
+		<summary class="flex cursor-pointer list-none items-center justify-between font-medium">
+			<span><span class="eyebrow mr-1 inline-block transition group-open:rotate-90">&rsaquo;</span> Add exercise</span>
+			<span class="font-mono text-xs text-muted" th:text="|${libraryCount} in library|">130 in library</span>
+		</summary>
+		<div class="mt-4 space-y-4" data-picker>
+			<input class="input" type="search" placeholder="Search exercises…" aria-label="Search exercises" data-picker-search>
+			<div class="flex flex-wrap gap-1.5">
+				<button type="button" class="chip active" data-picker-group="">All</button>
+				<button th:each="g : ${groups.keySet()}" type="button" class="chip" th:attr="data-picker-group=${g.name()}" th:text="${g.label}">Chest</button>
+			</div>
+			<form th:action="@{/workouts/{id}/exercises(id=${workout.id})}" method="post" class="max-h-96 space-y-4 overflow-y-auto pr-1">
+				<div th:each="g : ${groups}" th:attr="data-picker-section=${g.key.name()}">
+					<p class="label sticky top-0 bg-surface py-1" th:text="${g.key.label}">Chest</p>
+					<div class="grid gap-1 sm:grid-cols-2">
+						<button th:each="ex : ${g.value}" type="submit" name="exerciseId" th:value="${ex.id}"
+								th:attr="data-picker-item=${#strings.toLowerCase(ex.name + ' ' + ex.equipment.label)}"
+								class="flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-bg hover:text-accent">
+							<span class="truncate" th:text="${ex.name}">Bench Press</span>
+							<span class="shrink-0 font-mono text-[10px] text-zinc-600" th:text="${ex.equipment.label}">Barbell</span>
+						</button>
+					</div>
+				</div>
+				<p class="hidden py-4 text-center text-sm text-muted" data-picker-empty>No match.</p>
+			</form>
+			<p class="text-xs text-muted">Can't find it? <a th:href="@{/workouts/exercises}" class="text-accent hover:underline">Add your own exercise</a>.</p>
+		</div>
+	</details>
+
+	<section class="flex flex-wrap gap-3">
+		<form th:action="@{/workouts/{id}/finish(id=${workout.id})}" method="post" class="flex-1">
+			<button type="submit" class="btn w-full justify-center py-3" th:unless="${workout.finished}">Finish workout</button>
+			<button type="submit" class="btn-ghost w-full justify-center py-3" th:if="${workout.finished}">Re-open workout</button>
+		</form>
+		<form th:action="@{/workouts/{id}/repeat(id=${workout.id})}" method="post">
+			<button type="submit" class="btn-ghost h-full" title="Start a new workout with the same exercises">Repeat</button>
+		</form>
+		<form th:action="@{/workouts/{id}/delete(id=${workout.id})}" method="post">
+			<button type="submit" class="btn-ghost btn-danger h-full" data-confirm="Delete this workout? This can't be undone.">Delete</button>
+		</form>
+	</section>
+
+	<!-- Rest timer: starts when you check off a set. Hidden until then. -->
+	<div class="fixed inset-x-0 bottom-4 z-20 hidden px-4" data-rest>
+		<div class="mx-auto flex max-w-md items-center gap-3 rounded-xl border border-accent/50 bg-surface/95 p-3 shadow-2xl shadow-black/50 backdrop-blur">
+			<div class="relative size-12 shrink-0">
+				<svg viewBox="0 0 36 36" class="size-12 -rotate-90" aria-hidden="true">
+					<circle cx="18" cy="18" r="16" fill="none" stroke-width="3" class="stroke-border"></circle>
+					<circle cx="18" cy="18" r="16" fill="none" stroke-width="3" stroke-linecap="round" class="stroke-accent"
+							pathLength="100" stroke-dasharray="100" stroke-dashoffset="0" data-rest-ring></circle>
+				</svg>
+			</div>
+			<div class="min-w-0 flex-1">
+				<p class="label mb-0" data-rest-label>Rest</p>
+				<p class="font-mono text-2xl tabular-nums" data-rest-time>1:30</p>
+			</div>
+			<button type="button" class="btn-ghost px-2" data-rest-adjust="-15" aria-label="15 seconds less">−15</button>
+			<button type="button" class="btn-ghost px-2" data-rest-adjust="15" aria-label="15 seconds more">+15</button>
+			<button type="button" class="btn px-3" data-rest-skip>Skip</button>
+		</div>
+	</div>
+
+	<!-- Default rest length, remembered on this device. -->
+	<div class="flex items-center justify-center gap-2 font-mono text-xs text-muted">
+		<label for="rest-length">Rest timer</label>
+		<select id="rest-length" class="input w-auto py-1 text-xs" data-rest-length>
+			<option value="0">Off</option>
+			<option value="30">0:30</option>
+			<option value="60">1:00</option>
+			<option value="90" selected>1:30</option>
+			<option value="120">2:00</option>
+			<option value="180">3:00</option>
+			<option value="300">5:00</option>
+		</select>
+	</div>
+
+	<script th:src="@{/js/workout.js}" defer></script>
+</main>
+</body>
+</html>

@@ -25,6 +25,7 @@
 					<!-- Private pages: only shown when logged in. -->
 					<li sec:authorize="isAuthenticated()"><a th:href="@{/tasks}" class="nav-link" th:classappend="${title == 'Tasks'} ? 'active'">Tasks</a></li>
 					<li sec:authorize="isAuthenticated()"><a th:href="@{/calendar}" class="nav-link" th:classappend="${title == 'Calendar'} ? 'active'">Calendar</a></li>
+					<li sec:authorize="isAuthenticated()"><a th:href="@{/workouts}" class="nav-link" th:classappend="${title == 'Workout'} ? 'active'">Workout</a></li>
 					<li sec:authorize="isAuthenticated()"><a th:href="@{/now}" class="nav-link" th:classappend="${title == 'Now'} ? 'active'">Now</a></li>
 					<!-- Add another page later: controller method + template, then a link here. -->
 					<li sec:authorize="isAuthenticated()">

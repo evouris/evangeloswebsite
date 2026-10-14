@@ -29,7 +29,8 @@ class SecurityTests {
 
 	@Test
 	void privatePagesRedirectToLogin() throws Exception {
-		for (String path : new String[] { "/tasks", "/calendar", "/projects/manage" }) {
+		for (String path : new String[] { "/tasks", "/calendar", "/projects/manage", "/workouts",
+				"/workouts/exercises" }) {
 			mvc.perform(get(path)).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
 		}
 	}
@@ -45,6 +46,8 @@ class SecurityTests {
 		mvc.perform(get("/tasks")).andExpect(status().isOk());
 		mvc.perform(get("/calendar")).andExpect(status().isOk());
 		mvc.perform(get("/projects/manage")).andExpect(status().isOk());
+		mvc.perform(get("/workouts")).andExpect(status().isOk());
+		mvc.perform(get("/workouts/exercises")).andExpect(status().isOk());
 	}
 
 }
