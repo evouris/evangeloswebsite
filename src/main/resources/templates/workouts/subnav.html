@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Tabs shared by the workout pages; pass 'log' or 'exercises'. -->
+<nav th:fragment="subnav (active)" class="flex flex-wrap gap-1" aria-label="Workout sections">
+	<a th:href="@{/workouts}" class="nav-link" th:classappend="${active == 'log'} ? 'active'">Log</a>
+	<a th:href="@{/workouts/exercises}" class="nav-link" th:classappend="${active == 'exercises'} ? 'active'">Exercises</a>
+</nav>
+</body>
+</html>

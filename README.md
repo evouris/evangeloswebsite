@@ -28,11 +28,25 @@ Open [http://localhost:8080](http://localhost:8080).
 
 Shared nav lives in `templates/layout.html`. To add a page later, add a controller method, a template, and a nav link.
 
-Tasks and calendar save to a local H2 file under `data/`.
+Tasks, calendar and workouts save to a local H2 file under `data/`.
+
+## Workout tracker
+
+`/workouts` (the **Workout** tab, login required) logs gym sessions:
+
+- Start an empty workout, from a template (Push, Pull, Legs, Upper, Lower, Full Body), or **Repeat** a past one.
+- Each exercise has a row per set with weight/reps (or reps only, or minutes/distance for cardio) and a check box.
+  Checking a set saves in the background and starts a rest timer (length picked at the bottom of the page).
+- Adding an exercise pre-fills the sets from the last time you did it, and the "previous" column shows those numbers.
+  Beating your best set flags it as a **PR**. Tap a set number to mark it as a warm-up.
+- **Exercises** lists 130+ built-in movements plus any you add. Click one for its records, a progress chart and history.
+
+Built-in exercises live in `workouts/ExerciseSeeder.java`; add a line there and it shows up on the next start.
+Templates are in `WorkoutService.PRESETS`.
 
 ## Login
 
-Home, About, and Projects are public. Tasks, Calendar, and `/projects/manage` need a login
+Home, About, and Projects are public. Tasks, Calendar, Workout, and `/projects/manage` need a login
 (footer link "log in", or go to `/login`).
 
 The username and BCrypt password hash live in `config/application.properties`, which is git-ignored

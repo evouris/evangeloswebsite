@@ -63,4 +63,64 @@
   .tag {
     @apply rounded border border-border px-2 py-0.5 font-mono text-xs text-muted;
   }
+
+  /* ----- Workout tracker ----- */
+  .stat {
+    @apply rounded-lg border border-border bg-surface p-4;
+  }
+  .stat-value {
+    @apply mt-1 text-2xl font-semibold tracking-tight tabular-nums;
+  }
+
+  /* One set: label, previous, inputs, check, delete. Row state comes from data attributes set by workout.js. */
+  .set-row {
+    @apply grid items-center gap-1.5 rounded-md px-1 py-1 transition-colors sm:gap-2 sm:px-2;
+    grid-template-columns: 2rem minmax(0, 1fr) 4.5rem 4rem 2.5rem 1.5rem;
+  }
+  .set-row.reps-only {
+    grid-template-columns: 2rem minmax(0, 1fr) 4.5rem 2.5rem 1.5rem;
+  }
+  .set-row[data-done="true"] {
+    @apply bg-accent/10;
+  }
+  .set-input {
+    @apply w-full rounded-md border border-border bg-bg px-2 py-1.5 text-center font-mono text-sm tabular-nums text-zinc-100 placeholder:text-zinc-700 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  .set-input::-webkit-outer-spin-button,
+  .set-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .set-row[data-done="true"] .set-input {
+    @apply border-accent/30 bg-transparent;
+  }
+  .set-label {
+    @apply flex size-8 cursor-pointer items-center justify-center rounded-md font-mono text-xs text-muted transition hover:bg-bg hover:text-zinc-100;
+  }
+  .set-row[data-warmup="true"] .set-label {
+    @apply text-amber-400;
+  }
+  .check-btn {
+    @apply flex size-9 cursor-pointer items-center justify-center rounded-md border border-zinc-700 text-transparent transition hover:border-accent;
+  }
+  .set-row[data-done="true"] .check-btn {
+    @apply border-accent bg-accent text-bg;
+  }
+  .pr-badge {
+    @apply mr-1 hidden rounded bg-amber-400/15 px-1 font-mono text-[10px] font-semibold text-amber-400;
+  }
+  .set-row[data-pr="true"] .pr-badge {
+    @apply inline;
+  }
+  .icon-btn {
+    @apply flex size-7 cursor-pointer items-center justify-center rounded-md text-zinc-600 transition hover:bg-bg hover:text-zinc-100;
+  }
+  .chip {
+    @apply cursor-pointer rounded-full border border-border px-3 py-1 text-xs text-muted transition hover:border-zinc-600 hover:text-zinc-100;
+  }
+  .chip.active {
+    @apply border-accent bg-accent/10 text-accent;
+  }
 }

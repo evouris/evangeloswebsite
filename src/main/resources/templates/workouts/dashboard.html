@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Workout', ~{::main})}">
+<head>
+	<title>Workout</title>
+</head>
+<body>
+<main class="space-y-8">
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ lift --log</p>
+			<h1>Workout</h1>
+		</div>
+		<nav th:replace="~{workouts/subnav :: subnav('log')}"></nav>
+	</header>
+
+	<!-- A workout that was started but never finished: one tap back into it. -->
+	<a th:if="${dash.inProgress != null}" th:href="@{/workouts/{id}(id=${dash.inProgress.id})}"
+	   class="card flex items-center justify-between gap-4 border-accent/60 transition hover:border-accent">
+		<div class="min-w-0">
+			<p class="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-accent">
+				<span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-accent"></span></span>
+				In progress
+			</p>
+			<p class="mt-1 truncate font-medium" th:text="${dash.inProgress.name}">Push Day</p>
+			<p class="font-mono text-xs text-muted"
+			   th:text="|${dash.inProgress.completedSets} / ${dash.inProgress.totalSets} sets done|">3 / 18 sets done</p>
+		</div>
+		<span class="btn shrink-0">Resume &rarr;</span>
+	</a>
+
+	<section class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Stats">
+		<div class="stat">
+			<p class="label">This week</p>
+			<p class="stat-value" th:text="${dash.thisWeek}">3</p>
+		</div>
+		<div class="stat">
+			<p class="label">Week streak</p>
+			<p class="stat-value"><span th:text="${dash.weekStreak}">4</span><span class="ml-1 text-sm font-normal text-muted">wk</span></p>
+		</div>
+		<div class="stat">
+			<p class="label">This month</p>
+			<p class="stat-value" th:text="${dash.thisMonth}">9</p>
+		</div>
+		<div class="stat">
+			<p class="label">Volume this week</p>
+			<p class="stat-value"><span th:text="${#numbers.formatInteger(dash.weekVolume, 1, 'COMMA')}">24,310</span><span class="ml-1 text-sm font-normal text-muted">lb</span></p>
+		</div>
+	</section>
+
+	<!-- Monday-to-Sunday strip: filled dot = trained that day. -->
+	<section class="card" aria-label="This week">
+		<ol class="grid grid-cols-7 gap-2 text-center">
+			<li th:each="day : ${dash.week}" class="space-y-2">
+				<p class="font-mono text-xs uppercase" th:classappend="${day.today} ? 'text-accent' : 'text-zinc-600'"
+				   th:text="${#temporals.format(day.date, 'EEE')}">Mon</p>
+				<span class="mx-auto flex size-9 items-center justify-center rounded-full border font-mono text-xs"
+					  th:classappend="${day.trained} ? 'border-accent bg-accent text-bg font-semibold' : (${day.today} ? 'border-accent/60 text-zinc-100' : 'border-border text-zinc-600')"
+					  th:text="${day.date.dayOfMonth}"
+					  th:title="${day.trained} ? 'Trained' : 'Rest day'">14</span>
+			</li>
+		</ol>
+	</section>
+
+	<section class="card space-y-5">
+		<h2>Start a workout</h2>
+		<form th:action="@{/workouts}" method="post" class="flex flex-col gap-3 sm:flex-row">
+			<label class="sr-only" for="name">Workout name</label>
+			<input class="input" type="text" id="name" name="name" maxlength="100" placeholder="Name it (optional) — e.g. Chest & Tris">
+			<button type="submit" class="btn shrink-0 justify-center">Start empty workout</button>
+		</form>
+		<div class="space-y-2">
+			<p class="label">Or start from a template</p>
+			<form th:action="@{/workouts}" method="post" class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+				<button th:each="preset : ${presets}" type="submit" name="preset" th:value="${preset.key}"
+						class="group cursor-pointer rounded-md border border-border bg-bg p-3 text-left transition hover:border-accent">
+					<span class="block font-medium group-hover:text-accent" th:text="${preset.key}">Push</span>
+					<span class="mt-0.5 block truncate text-xs text-muted"
+						  th:text="${#strings.listJoin(preset.value, ', ')}">Bench Press, Overhead Press</span>
+				</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="space-y-3">
+		<div class="flex items-baseline justify-between">
+			<h2>History</h2>
+			<p class="font-mono text-xs text-muted" th:text="|${dash.workouts.size()} total|">12 total</p>
+		</div>
+
+		<p th:if="${dash.workouts.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">
+			No workouts yet. Start one above.
+		</p>
+
+		<ul th:unless="${dash.workouts.empty}" class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+			<li th:each="w : ${dash.workouts}" class="bg-surface">
+				<div class="flex items-start gap-4 p-4">
+					<!-- Calendar-style date block -->
+					<div class="w-12 shrink-0 rounded-md border border-border py-1 text-center">
+						<p class="font-mono text-[10px] uppercase text-accent" th:text="${#temporals.format(w.performedOn, 'MMM')}">Oct</p>
+						<p class="text-lg font-semibold leading-tight" th:text="${w.performedOn.dayOfMonth}">14</p>
+					</div>
+					<a th:href="@{/workouts/{id}(id=${w.id})}" class="min-w-0 flex-1 space-y-1">
+						<p class="flex flex-wrap items-center gap-2">
+							<span class="font-medium hover:text-accent" th:text="${w.name}">Push Day</span>
+							<span th:unless="${w.finished}" class="tag border-accent/40 text-accent">in progress</span>
+						</p>
+						<p class="font-mono text-xs text-muted">
+							<span th:text="${#temporals.format(w.performedOn, 'EEEE')}">Tuesday</span>
+							&middot; <span th:text="|${w.completedSets}/${w.totalSets} sets|">18/18 sets</span>
+							<th:block th:if="${w.volume > 0}">&middot; <span th:text="|${#numbers.formatInteger(w.volume, 1, 'COMMA')} lb|">12,000 lb</span></th:block>
+							<th:block th:if="${w.durationLabel != null}">&middot; <span th:text="${w.durationLabel}">1h 05m</span></th:block>
+						</p>
+						<p th:unless="${w.exercises.empty}" class="truncate text-sm text-zinc-400"
+						   th:text="${#strings.listJoin(w.exercises.![exercise.name], ' · ')}">Bench Press · Overhead Press</p>
+					</a>
+					<div class="flex shrink-0 flex-col gap-2 sm:flex-row">
+						<form th:action="@{/workouts/{id}/repeat(id=${w.id})}" method="post">
+							<button type="submit" class="btn-ghost w-full justify-center" title="Start a new workout with the same exercises">Repeat</button>
+						</form>
+						<form th:action="@{/workouts/{id}/delete(id=${w.id})}" method="post">
+							<button type="submit" class="btn-ghost btn-danger w-full justify-center"
+									data-confirm="Delete this workout? This can't be undone.">Delete</button>
+						</form>
+					</div>
+				</div>
+			</li>
+		</ul>
+	</section>
+
+	<script th:src="@{/js/workout.js}" defer></script>
+</main>
+</body>
+</html>

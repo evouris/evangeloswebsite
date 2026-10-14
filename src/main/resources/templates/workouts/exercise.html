@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Workout', ~{::main})}">
+<head>
+	<title>Exercise</title>
+</head>
+<body>
+<main class="space-y-8" th:with="ex=${history.exercise}, tracking=${history.exercise.tracking.name()}">
+	<a th:href="@{/workouts/exercises}" class="font-mono text-xs text-muted hover:text-accent">&larr; all exercises</a>
+
+	<header class="space-y-2">
+		<p class="eyebrow">
+			<span th:text="${ex.muscleGroup.label}">Chest</span> &middot; <span th:text="${ex.equipment.label}">Barbell</span>
+		</p>
+		<h1 th:text="${ex.name}">Bench Press</h1>
+	</header>
+
+	<!-- Personal records; which ones make sense depends on what the exercise tracks. -->
+	<section class="grid grid-cols-2 gap-3" th:classappend="${tracking == 'WEIGHT_REPS'} ? 'sm:grid-cols-5' : 'sm:grid-cols-3'"
+			 aria-label="Personal records">
+		<th:block th:if="${tracking == 'WEIGHT_REPS'}">
+			<div class="stat">
+				<p class="label">Heaviest</p>
+				<p class="stat-value"><span th:text="${#numbers.formatDecimal(history.heaviest, 1, 'COMMA', 0, 'POINT')}">225</span><span class="ml-1 text-sm font-normal text-muted">lb</span></p>
+			</div>
+			<div class="stat">
+				<p class="label" title="Estimated one-rep max (Epley formula)">Est. 1RM</p>
+				<p class="stat-value"><span th:text="${#numbers.formatDecimal(history.bestOneRepMax, 1, 'COMMA', 0, 'POINT')}">255</span><span class="ml-1 text-sm font-normal text-muted">lb</span></p>
+			</div>
+			<div class="stat">
+				<p class="label">Best volume</p>
+				<p class="stat-value"><span th:text="${#numbers.formatInteger(history.bestVolume, 1, 'COMMA')}">5,400</span><span class="ml-1 text-sm font-normal text-muted">lb</span></p>
+			</div>
+		</th:block>
+		<div class="stat" th:if="${tracking == 'REPS'}">
+			<p class="label">Most reps</p>
+			<p class="stat-value" th:text="${history.mostReps}">20</p>
+		</div>
+		<div class="stat" th:if="${tracking == 'DURATION'}">
+			<p class="label">Longest</p>
+			<p class="stat-value"><span th:text="${#numbers.formatDecimal(history.longestMinutes, 1, 'COMMA', 1, 'POINT')}">30</span><span class="ml-1 text-sm font-normal text-muted">min</span></p>
+		</div>
+		<div class="stat">
+			<p class="label">Workouts</p>
+			<p class="stat-value" th:text="${history.sessions.size()}">12</p>
+		</div>
+		<div class="stat">
+			<p class="label">Sets logged</p>
+			<p class="stat-value" th:text="${history.totalSets}">48</p>
+		</div>
+	</section>
+
+	<!-- Progress chart: best set of each workout. Needs at least two workouts. -->
+	<section class="card space-y-3" th:if="${history.chart != null}" th:with="chart=${history.chart}">
+		<div class="flex flex-wrap items-baseline justify-between gap-2">
+			<h2 th:switch="${tracking}">
+				<span th:case="'WEIGHT_REPS'">Estimated 1RM over time</span>
+				<span th:case="'REPS'">Best set (reps) over time</span>
+				<span th:case="'DURATION'">Longest set (min) over time</span>
+			</h2>
+			<p class="font-mono text-xs text-muted" th:text="|${chart.firstDate} – ${chart.lastDate}|">Sep 1 – Oct 14</p>
+		</div>
+		<div class="relative" data-chart>
+			<svg th:attr="viewBox=|0 0 ${chart.width} ${chart.height}|" class="h-auto w-full overflow-visible" role="img"
+				 aria-label="Line chart of your best set per workout; the history list below has the same numbers.">
+				<g th:each="tick : ${chart.ticks}">
+					<line th:attr="x1=${chart.left}, x2=${chart.right}, y1=${tick.y}, y2=${tick.y}" class="stroke-border" stroke-width="1"></line>
+					<text th:attr="x=${chart.left - 8}, y=${tick.y}" text-anchor="end" dominant-baseline="middle"
+						  class="fill-zinc-500 font-mono text-[12px]" th:text="${tick.label}">200</text>
+				</g>
+				<line th:attr="x1=${chart.left}, x2=${chart.left}, y1=${chart.ticks[chart.ticks.size() - 1].y}, y2=${chart.ticks[0].y}"
+					  class="hidden stroke-zinc-500" stroke-dasharray="3 3" data-chart-crosshair></line>
+				<path th:attr="d=${chart.line}" fill="none" class="stroke-accent" stroke-width="2"
+					  stroke-linejoin="round" stroke-linecap="round"></path>
+				<g th:each="p : ${chart.points}">
+					<circle th:attr="cx=${p.x}, cy=${p.y}" r="4" class="fill-accent stroke-surface" stroke-width="2"></circle>
+					<!-- Bigger invisible target so the dot is easy to hover or tap. -->
+					<circle th:attr="cx=${p.x}, cy=${p.y}, data-date=${p.date}, data-value=${p.value}" r="14" fill="transparent"
+							class="cursor-pointer" data-chart-point>
+						<title th:text="|${p.date}: ${p.value}|">Oct 14: 225</title>
+					</circle>
+				</g>
+				<text th:attr="x=${chart.left}, y=${chart.height - 6}" class="fill-zinc-500 font-mono text-[12px]" th:text="${chart.firstDate}">Sep 1</text>
+				<text th:attr="x=${chart.right}, y=${chart.height - 6}" text-anchor="end" class="fill-zinc-500 font-mono text-[12px]" th:text="${chart.lastDate}">Oct 14</text>
+			</svg>
+			<div class="pointer-events-none absolute hidden -translate-x-1/2 -translate-y-full rounded-md border border-border bg-bg px-2 py-1 font-mono text-xs whitespace-nowrap shadow-lg"
+				 data-chart-tip></div>
+		</div>
+	</section>
+
+	<section class="space-y-3">
+		<h2>History</h2>
+		<p th:if="${history.sessions.empty}" class="py-8 text-center font-mono text-sm text-zinc-600">
+			No completed sets yet. Check off a set in a workout and it shows up here.
+		</p>
+		<ul th:unless="${history.sessions.empty}" class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+			<li th:each="s : ${history.sessions}" class="bg-surface p-4">
+				<div class="flex flex-wrap items-baseline justify-between gap-2">
+					<a th:href="@{/workouts/{id}(id=${s.workout.id})}" class="font-medium hover:text-accent" th:text="${s.workout.name}">Push Day</a>
+					<time class="font-mono text-xs text-muted" th:datetime="${s.workout.performedOn}"
+						  th:text="${#temporals.format(s.workout.performedOn, 'EEE, MMM d, yyyy')}">Tue, Oct 14</time>
+				</div>
+				<ol class="mt-2 flex flex-wrap gap-1.5">
+					<li th:each="set : ${s.sets}" class="tag text-zinc-300" th:text="${set}">135 × 8</li>
+				</ol>
+				<p th:if="${s.volume > 0}" class="mt-2 font-mono text-xs text-zinc-600"
+				   th:text="|volume ${#numbers.formatInteger(s.volume, 1, 'COMMA')} lb|">volume 3,240 lb</p>
+			</li>
+		</ul>
+	</section>
+
+	<script th:src="@{/js/workout.js}" defer></script>
+</main>
+</body>
+</html>
