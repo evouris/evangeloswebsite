@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Notes', ~{::main})}">
+<head>
+	<title>Notes</title>
+</head>
+<body>
+<main class="space-y-8">
+	<header class="flex flex-wrap items-end justify-between gap-4">
+		<div class="space-y-2">
+			<p class="eyebrow">$ notes --ls</p>
+			<h1 th:text="${currentFolder != null} ? ${currentFolder.name} : (${filter == 'pinned'} ? 'Pinned' : (${filter == 'unfiled'} ? 'Unfiled' : 'Notes'))">Notes</h1>
+		</div>
+		<div class="flex flex-wrap gap-2">
+			<!-- New notes land in the folder you're looking at. -->
+			<form th:action="@{/notes}" method="post">
+				<input type="hidden" name="folderId" th:if="${currentFolder != null}" th:value="${currentFolder.id}">
+				<button type="submit" class="btn-ghost">+ New note</button>
+			</form>
+			<form th:action="@{/notes}" method="post" data-record-form>
+				<input type="hidden" name="folderId" th:if="${currentFolder != null}" th:value="${currentFolder.id}">
+				<input type="hidden" name="record" value="true">
+				<input type="hidden" name="title" value="">
+				<button type="submit" class="btn">
+					<span class="size-2.5 rounded-full bg-red-500" aria-hidden="true"></span> Record
+				</button>
+			</form>
+		</div>
+	</header>
+
+	<p th:if="${message}" class="card border-accent/40 py-3 text-sm" th:text="${message}">Done.</p>
+
+	<div class="grid gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
+		<!-- Folders: chips on phones, a sidebar on wider screens. -->
+		<aside class="space-y-4">
+			<nav aria-label="Folders">
+				<ul class="flex flex-wrap gap-1 md:flex-col">
+					<li><a th:href="@{/notes}" class="folder-link" th:classappend="${filter == ''} ? 'active'">
+						<span>All notes</span><span class="folder-count" th:text="${total}">12</span></a></li>
+					<li th:if="${pinnedCount > 0}"><a th:href="@{/notes(folder='pinned')}" class="folder-link" th:classappend="${filter == 'pinned'} ? 'active'">
+						<span>&#9733; Pinned</span><span class="folder-count" th:text="${pinnedCount}">2</span></a></li>
+					<li><a th:href="@{/notes(folder='unfiled')}" class="folder-link" th:classappend="${filter == 'unfiled'} ? 'active'">
+						<span>Unfiled</span><span class="folder-count" th:text="${unfiledCount}">3</span></a></li>
+					<li th:each="f : ${folders}">
+						<a th:href="@{/notes(folder=${f.id})}" class="folder-link" th:classappend="${currentFolder != null and currentFolder.id == f.id} ? 'active'">
+							<span class="truncate"><span class="text-zinc-600" aria-hidden="true">/</span><span th:text="${f.name}">CS 101</span></span>
+							<span class="folder-count" th:text="${counts[f.id]}">4</span>
+						</a>
+					</li>
+				</ul>
+			</nav>
+
+			<form th:action="@{/notes/folders}" method="post" class="flex gap-2">
+				<label class="sr-only" for="new-folder">New folder name</label>
+				<input class="input py-1.5" id="new-folder" name="name" maxlength="60" placeholder="New folder…" required>
+				<button type="submit" class="btn-ghost shrink-0" title="Create folder">Add</button>
+			</form>
+
+			<details th:if="${currentFolder != null}" class="rounded-md border border-border p-3 text-sm">
+				<summary class="cursor-pointer font-mono text-xs uppercase tracking-wider text-muted">Folder options</summary>
+				<form th:action="@{/notes/folders/{id}(id=${currentFolder.id})}" method="post" class="mt-3 flex gap-2">
+					<label class="sr-only" for="rename-folder">Folder name</label>
+					<input class="input py-1.5" id="rename-folder" name="name" maxlength="60" th:value="${currentFolder.name}" required>
+					<button type="submit" class="btn-ghost shrink-0">Rename</button>
+				</form>
+				<form th:action="@{/notes/folders/{id}/delete(id=${currentFolder.id})}" method="post" class="mt-2">
+					<button type="submit" class="btn-ghost btn-danger w-full justify-center"
+							data-confirm="Delete this folder? Its notes are kept and moved to Unfiled.">Delete folder</button>
+				</form>
+			</details>
+		</aside>
+
+		<section class="min-w-0 space-y-4">
+			<form th:action="@{/notes}" method="get" role="search">
+				<input type="hidden" name="folder" th:if="${filter != ''}" th:value="${filter}">
+				<label class="sr-only" for="q">Search notes</label>
+				<input class="input" type="search" id="q" name="q" th:value="${q}"
+					   placeholder="Search titles, notes, transcripts and summaries…">
+			</form>
+
+			<p th:if="${notes.empty}" class="py-10 text-center font-mono text-sm text-zinc-600"
+			   th:text="${q != ''} ? 'No notes match that search.' : 'No notes here yet. Tap Record or + New note.'">
+				No notes here yet.
+			</p>
+
+			<ul th:unless="${notes.empty}" class="space-y-2">
+				<li th:each="n : ${notes}" class="note-card">
+					<a th:href="@{/notes/{id}(id=${n.id})}" class="block min-w-0 flex-1 space-y-1.5">
+						<p class="flex items-start gap-2">
+							<span th:if="${n.pinned}" class="text-amber-400" title="Pinned">&#9733;</span>
+							<span class="min-w-0 break-words font-medium" th:text="${n.title}">Lecture 4: Recursion</span>
+						</p>
+						<p th:if="${n.preview != ''}" class="line-clamp-2 text-sm text-zinc-400" th:text="${n.preview}">Base case...</p>
+						<p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+							<time data-local th:datetime="${n.updatedAt}" th:text="${#temporals.format(n.updatedAt, 'MMM d, yyyy')}">Oct 16, 2026</time>
+							<span th:if="${n.folder != null and currentFolder == null}" class="tag" th:text="${n.folder.name}">CS 101</span>
+							<span th:unless="${n.recordings.empty}" class="tag border-red-500/30 text-red-300"
+								  th:text="|&#9679; ${n.recordings.size()} rec · ${n.totalLabel}|">● 1 rec · 4:07</span>
+							<span th:if="${n.summary != null}" class="tag border-accent/40 text-accent">summary</span>
+						</p>
+					</a>
+				</li>
+			</ul>
+		</section>
+	</div>
+
+	<script th:src="@{/js/notes.js}" defer></script>
+</main>
+</body>
+</html>

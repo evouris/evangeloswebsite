@@ -123,4 +123,40 @@
   .chip.active {
     @apply border-accent bg-accent/10 text-accent;
   }
+
+  /* ----- Notes ----- */
+  .folder-link {
+    @apply flex items-center justify-between gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted transition hover:border-zinc-600 hover:text-zinc-100 md:border-transparent;
+  }
+  .folder-link.active {
+    @apply border-accent/40 bg-surface text-accent;
+  }
+  .folder-count {
+    @apply font-mono text-xs text-zinc-600;
+  }
+  .note-card {
+    @apply flex rounded-lg border border-border bg-surface p-4 transition hover:border-zinc-600;
+  }
+  /* Big round record button: red dot when idle, pulsing square while recording. */
+  .record-btn {
+    @apply flex size-16 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-zinc-600 bg-bg transition hover:border-red-400 disabled:cursor-default;
+  }
+  .record-dot {
+    @apply block size-7 rounded-full bg-red-500 transition-all;
+  }
+  .record-btn[data-state="recording"] {
+    @apply border-red-500;
+  }
+  .record-btn[data-state="recording"] .record-dot {
+    @apply size-6 animate-pulse rounded-md;
+  }
+  .record-btn[data-state="paused"] .record-dot {
+    @apply size-6 rounded-md bg-amber-400;
+  }
+  .record-btn[data-state="saving"] .record-dot {
+    @apply opacity-40;
+  }
+  .spinner {
+    @apply inline-block size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent align-[-2px];
+  }
 }
