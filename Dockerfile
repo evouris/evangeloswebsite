@@ -15,6 +15,8 @@ COPY --from=build /app/target/*.jar app.jar
 
 # The database lives in /data, which should be a persistent volume so tasks survive redeploys.
 ENV SPRING_DATASOURCE_URL=jdbc:h2:file:/data/personalsite
+# Voice recordings from the Notes page live on the same volume.
+ENV NOTES_STORAGE_DIR=/data/recordings
 # Cache templates in production (local dev turns this off so edits show on refresh).
 ENV SPRING_THYMELEAF_CACHE=true
 

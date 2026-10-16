@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page('Notes', ~{::main})}">
+<head>
+	<title>Note</title>
+</head>
+<body>
+<main class="space-y-6" th:attr="data-note=${note.id},data-csrf-header=${_csrf.headerName},data-csrf=${_csrf.token}">
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<a th:href="${note.folder != null} ? @{/notes(folder=${note.folder.id})} : @{/notes}"
+		   class="font-mono text-sm text-muted hover:text-accent">&larr; <span th:text="${note.folder != null} ? ${note.folder.name} : 'Notes'">Notes</span></a>
+		<!-- Separate forms so they don't nest inside the editor form below. -->
+		<div class="flex flex-wrap gap-2">
+			<form th:action="@{/notes/{id}/pin(id=${note.id})}" method="post">
+				<button type="submit" class="btn-ghost" th:classappend="${note.pinned} ? 'border-amber-400/50 text-amber-400'"
+						th:text="${note.pinned} ? '★ Pinned' : '☆ Pin'">☆ Pin</button>
+			</form>
+			<a th:href="@{/notes/{id}/export(id=${note.id})}" class="btn-ghost" title="Download as a Markdown file">Export</a>
+			<form th:action="@{/notes/{id}/delete(id=${note.id})}" method="post">
+				<button type="submit" class="btn-ghost btn-danger"
+						data-confirm="Delete this note and its recordings? This can't be undone.">Delete</button>
+			</form>
+		</div>
+	</div>
+
+	<p th:if="${error}" class="card border-red-500/40 py-3 text-sm text-red-300" role="alert" th:text="${error}">Something failed.</p>
+
+	<!-- The note itself. notes.js saves it in the background as you type; the button is for when JS is off. -->
+	<form th:action="@{/notes/{id}(id=${note.id})}" method="post" class="space-y-3" data-note-form>
+		<label class="sr-only" for="title">Title</label>
+		<input id="title" name="title" maxlength="150" th:value="${note.title}" autocomplete="off"
+			   class="w-full rounded-md border border-transparent bg-transparent px-1 py-1 text-2xl font-semibold tracking-tight text-zinc-100 placeholder:text-zinc-600 hover:border-border focus:border-accent focus:outline-none sm:text-3xl"
+			   placeholder="Title">
+		<div class="flex flex-wrap items-center gap-3">
+			<label class="sr-only" for="folderId">Folder</label>
+			<select id="folderId" name="folderId" class="input w-auto py-1.5">
+				<option value="" th:selected="${note.folder == null}">Unfiled</option>
+				<option th:each="f : ${folders}" th:value="${f.id}" th:text="${f.name}"
+						th:selected="${note.folder != null and note.folder.id == f.id}">CS 101</option>
+			</select>
+			<p class="font-mono text-xs text-muted" data-save-status>
+				Updated <time data-local th:datetime="${note.updatedAt}" th:text="${#temporals.format(note.updatedAt, 'MMM d, yyyy')}">Oct 16</time>
+			</p>
+			<button type="submit" class="btn-ghost ml-auto" data-save-button>Save</button>
+		</div>
+		<label class="sr-only" for="body">Notes</label>
+		<textarea id="body" name="body" rows="8" class="input min-h-48 resize-y text-base leading-relaxed"
+				  placeholder="Type your notes here… or record below and let it transcribe."
+				  th:text="${note.body}"></textarea>
+	</form>
+
+	<!-- Recorder. Needs JavaScript and a microphone; on phones the browser asks for mic access the first time. -->
+	<section id="recorder" class="card space-y-4" data-recorder
+			 th:attr="data-upload-url=@{/notes/{id}/recordings(id=${note.id})},data-server-transcribe=${transcriptionEnabled}"
+			 th:classappend="${param.record != null} ? 'border-accent/60'">
+		<div class="flex flex-wrap items-center justify-between gap-3">
+			<h2>Record</h2>
+			<label class="flex cursor-pointer items-center gap-2 text-sm text-muted" data-live-toggle hidden>
+				<input type="checkbox" class="accent-accent" data-live-checkbox>
+				Live transcript
+			</label>
+		</div>
+
+		<p class="text-sm text-muted" data-recorder-unsupported hidden>
+			This browser can't record audio here. Recording needs a recent Chrome, Safari or Firefox, and the site must be
+			opened over <span class="font-mono">https://</span>. You can still upload an audio file below.
+		</p>
+
+		<div class="flex flex-wrap items-center gap-4" data-recorder-controls hidden>
+			<button type="button" class="record-btn" data-record aria-label="Start recording">
+				<span class="record-dot" aria-hidden="true"></span>
+			</button>
+			<div class="min-w-32 flex-1 space-y-1.5">
+				<p class="font-mono text-2xl tabular-nums" data-timer>0:00</p>
+				<p class="font-mono text-xs uppercase tracking-wider text-muted" data-recorder-state>Tap to record</p>
+				<div class="h-1.5 overflow-hidden rounded-full bg-bg" aria-hidden="true">
+					<div class="h-full w-0 rounded-full bg-accent transition-[width] duration-75" data-level></div>
+				</div>
+			</div>
+			<div class="flex w-full gap-2 sm:w-auto">
+				<button type="button" class="btn-ghost flex-1 justify-center py-2" data-pause hidden>Pause</button>
+				<button type="button" class="btn flex-1 justify-center" data-stop hidden>Stop &amp; save</button>
+			</div>
+		</div>
+
+		<div class="rounded-md border border-border bg-bg p-3 text-sm leading-relaxed text-zinc-300" data-live-output hidden>
+			<span data-live-final></span> <span class="text-zinc-500" data-live-interim></span>
+		</div>
+
+		<p class="text-sm" data-recorder-message role="status" aria-live="polite"></p>
+
+		<!-- Upload an existing file instead, e.g. from the phone's voice memo app. -->
+		<details class="text-sm">
+			<summary class="cursor-pointer text-muted hover:text-zinc-100">Upload an audio file instead</summary>
+			<form th:action="@{/notes/{id}/recordings(id=${note.id})}" method="post" enctype="multipart/form-data"
+				  class="mt-3 flex flex-col gap-2 sm:flex-row" data-upload-form>
+				<input type="file" name="audio" accept="audio/*" required
+					   class="input file:mr-3 file:rounded file:border-0 file:bg-surface file:px-2 file:py-1 file:text-zinc-100">
+				<button type="submit" class="btn-ghost shrink-0 justify-center">Upload</button>
+			</form>
+		</details>
+	</section>
+
+	<!-- Recordings with their transcripts. -->
+	<section id="recordings" class="space-y-3" th:unless="${note.recordings.empty}">
+		<div class="flex items-baseline justify-between">
+			<h2>Recordings</h2>
+			<p class="font-mono text-xs text-muted" th:text="|${note.recordings.size()} · ${note.totalLabel} total|">2 · 14:05 total</p>
+		</div>
+		<article th:each="r, stat : ${note.recordings}" th:id="|recording-${r.id}|" class="card space-y-3">
+			<div class="flex flex-wrap items-center justify-between gap-2">
+				<p class="font-mono text-xs text-muted">
+					<span class="text-zinc-100" th:text="|#${stat.count}|">#1</span>
+					&middot; <span th:text="${r.durationLabel}">4:07</span>
+					&middot; <span th:text="${r.sizeLabel}">1.2 MB</span>
+					&middot; <time data-local data-with-time th:datetime="${r.createdAt}" th:text="${#temporals.format(r.createdAt, 'MMM d, HH:mm')}">Oct 16</time>
+				</p>
+				<div class="flex flex-wrap gap-2">
+					<form th:if="${transcriptionEnabled}" th:action="@{/notes/{id}/recordings/{r}/transcribe(id=${note.id},r=${r.id})}" method="post" data-transcribe-form>
+						<button type="submit" class="btn-ghost"
+								th:text="${r.transcript == null} ? 'Transcribe' : 'Re-transcribe'"
+								th:attr="data-confirm=${r.transcript != null} ? 'Replace the current transcript with a fresh one?' : null">Transcribe</button>
+					</form>
+					<a th:href="@{/notes/{id}/recordings/{r}/audio(id=${note.id},r=${r.id},download=true)}" class="btn-ghost">Download</a>
+					<form th:action="@{/notes/{id}/recordings/{r}/delete(id=${note.id},r=${r.id})}" method="post">
+						<button type="submit" class="btn-ghost btn-danger" data-confirm="Delete this recording and its transcript?">Delete</button>
+					</form>
+				</div>
+			</div>
+			<audio controls preload="metadata" class="w-full" data-fix-duration th:src="@{/notes/{id}/recordings/{r}/audio(id=${note.id},r=${r.id})}"></audio>
+			<form th:action="@{/notes/{id}/recordings/{r}(id=${note.id},r=${r.id})}" method="post" class="space-y-2" data-transcript-form>
+				<div class="flex items-center justify-between gap-2">
+					<label class="label mb-0" th:for="|transcript-${r.id}|">Transcript</label>
+					<span class="font-mono text-xs text-muted" data-transcript-status
+						  th:text="${r.transcriptSource == 'ai'} ? 'transcribed' : (${r.transcriptSource == 'live'} ? 'live transcript' : (${r.transcriptSource == 'edited'} ? 'edited' : ''))"></span>
+				</div>
+				<textarea th:id="|transcript-${r.id}|" name="transcript" rows="5" class="input resize-y leading-relaxed"
+						  th:placeholder="${transcriptionEnabled} ? 'No transcript yet. Tap Transcribe, or type one.' : 'No transcript yet. Type one, or turn on Live transcript next time you record.'"
+						  th:text="${r.transcript}"></textarea>
+				<button type="submit" class="btn-ghost" data-transcript-save>Save transcript</button>
+			</form>
+		</article>
+	</section>
+
+	<!-- Summary of the typed notes plus every transcript. -->
+	<section id="summary" class="card space-y-4">
+		<div class="flex flex-wrap items-center justify-between gap-3">
+			<h2>Summary</h2>
+			<div class="flex gap-2">
+				<form th:if="${note.summary != null}" th:action="@{/notes/{id}/summary/delete(id=${note.id})}" method="post">
+					<button type="submit" class="btn-ghost btn-danger" data-confirm="Clear this summary?">Clear</button>
+				</form>
+				<form th:action="@{/notes/{id}/summary(id=${note.id})}" method="post" data-summary-form>
+					<button type="submit" class="btn" th:text="${note.summary == null} ? 'Summarize' : 'Regenerate'">Summarize</button>
+				</form>
+			</div>
+		</div>
+		<div data-summary-body>
+			<p th:if="${note.summary == null}" class="text-sm text-muted">
+				Get the key points and action items from your notes and recordings in one tap.
+			</p>
+			<div th:unless="${note.summary == null}" class="space-y-2 leading-relaxed">
+				<th:block th:each="line : ${note.summaryLines}">
+					<p th:if="${line.heading}" class="label mt-4 first:mt-0" th:text="${line.text}">Key points</p>
+					<p th:if="${line.bullet}" class="flex gap-2 text-zinc-200"><span class="text-accent" aria-hidden="true">&bull;</span><span th:text="${line.text}">Point</span></p>
+					<p th:unless="${line.heading or line.bullet}" class="text-zinc-200" th:text="${line.text}">Text</p>
+				</th:block>
+			</div>
+		</div>
+		<p class="font-mono text-xs text-muted" th:if="${note.summary != null}">
+			<span th:text="${note.summarySource == 'claude'} ? 'Written by Claude' : 'Quick summary (built-in, no AI)'">Written by Claude</span>
+			&middot; <time data-local data-with-time th:datetime="${note.summarizedAt}" th:text="${#temporals.format(note.summarizedAt, 'MMM d, HH:mm')}">Oct 16</time>
+		</p>
+		<p class="font-mono text-xs text-muted" th:if="${!aiSummaries and note.summary == null}">
+			Using the built-in summarizer. Set ANTHROPIC_API_KEY on the server for AI summaries.
+		</p>
+	</section>
+
+	<script th:src="@{/js/notes.js}" defer></script>
+</main>
+</body>
+</html>
